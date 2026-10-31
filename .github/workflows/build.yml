@@ -38,19 +38,28 @@ jobs:
       - name: Set up Gradle Cache
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-        working-directory: project
-
-      - name: Build APK (Debug)
-        run: ./gradlew assembleDebug
-        working-directory: project
+      - name: Grant execute permission and Build APK
+        run: |
+          # Автоматически находим путь к gradlew, где бы он ни лежал внутри папки project
+          GRADLEW=$(find project -name "gradlew" -maxdepth 3)
+          if [ -z "$GRADLEW" ]; then
+            echo "❌ Ошибка: файл gradlew не найден в архиве!"
+            exit 1
+          fi
+          echo "✅ Найден файл: $GRADLEW"
+          
+          # Даем права на выполнение
+          chmod +x "$GRADLEW"
+          
+          # Запускаем сборку
+          "$GRADLEW" assembleDebug
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Google-Play-TV-Shortcut
-          path: project/app/build/outputs/apk/debug/app-debug.apk
+          path: project/**/app/build/outputs/apk/debug/app-debug.apk
+
 
 
 
