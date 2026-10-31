@@ -42,25 +42,32 @@ jobs:
         run: |
           cd project
           
-          # Ищем, где лежит файл build.gradle (даже если он во вложенной папке)
-          BUILD_GRADLE=$(find . -name "build.gradle" -o -name "build.gradle.kts" | head -n 1)
-          if [ -z "$BUILD_GRADLE" ]; then
-            echo "❌ Ошибка: файл build.gradle не найден в архиве вообще!"
-            exit 1
+          # Ищем settings.gradle, так как он всегда лежит строго в корне проекта
+          SETTINGS_GRADLE=$(find . -name "settings.gradle" -o -name "settings.gradle.kts" | head -n 1)
+          
+          if [ -z "$SETTINGS_GRADLE" ]; then
+            # Запасной вариант: ищем build.gradle, исключая папку app
+            BUILD_GRADLE=$(find . -name "build.gradle" -o -name "build.gradle.kts" | grep -v "/app" | head -n 1)
+            if [ -z "$BUILD_GRADLE" ]; then
+              echo "❌ Ошибка: корневой файл проекта (settings.gradle или build.gradle) не найден!"
+              exit 1
+            fi
+            PROJECT_DIR=$(dirname "$BUILD_GRADLE")
+          else
+            PROJECT_DIR=$(dirname "$SETTINGS_GRADLE")
           fi
           
-          # Переходим в папку, где лежит найденный build.gradle
-          PROJECT_DIR=$(dirname "$BUILD_GRADLE")
+          # Переходим в реальный корень проекта
           cd "$PROJECT_DIR"
-          echo "📁 Проект найден в директории: $(pwd)"
+          echo "📁 Корневая директория проекта: $(pwd)"
           
-          # Если файла gradlew нет, генерируем его автоматически
+          # Если файла gradlew нет в корне, создаем его через gradle wrapper
           if [ ! -f "gradlew" ]; then
-            echo "⚠️ Файл gradlew отсутствует, создаем его через gradle wrapper..."
+            echo "⚠️ Файл gradlew отсутствует в корне, создаем его через gradle wrapper..."
             gradle wrapper
           fi
           
-          # Даем права и собираем проект
+          # Даем права и запускаем сборку
           chmod +x gradlew
           ./gradlew assembleDebug
 
@@ -69,8 +76,3 @@ jobs:
         with:
           name: Google-Play-TV-Shortcut
           path: project/**/app/build/outputs/apk/debug/app-debug.apk
-
-
-
-
-
