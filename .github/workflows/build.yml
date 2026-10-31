@@ -23,11 +23,14 @@ jobs:
           java-version: '17'
 
       - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
         run: |
           yes | sdkmanager --licenses
           sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
-      - name: Extract projecti
+      - name: Extract project
         run: unzip -o Google_Play_TV_Shortcut_source.zip -d project
 
       - name: Set up Gradle
@@ -44,3 +47,4 @@ jobs:
         with:
           name: Google-Play-TV-Shortcut
           path: project/app/build/outputs/apk/debug/app-debug.apk
+
